@@ -1,6 +1,9 @@
 package com.example.lab5firebase;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
@@ -42,7 +46,7 @@ public class CustomListProductos extends ArrayAdapter {
         LayoutInflater inflater = context.getLayoutInflater();
         View rowView = inflater.inflate(R.layout.custom_item_producto, null, true);
 
-        TextView lbNombre = (TextView) rowView.findViewById(R.id.lbNombreProducto);
+        final TextView lbNombre = (TextView) rowView.findViewById(R.id.lbNombreProducto);
         TextView lbPrecio = (TextView) rowView.findViewById(R.id.lbPrecio);
         TextView lbDescripcion = (TextView) rowView.findViewById(R.id.lbDescripcion);
         final ImageView imgProducto = (ImageView) rowView.findViewById(R.id.imgProducto);
@@ -52,23 +56,55 @@ public class CustomListProductos extends ArrayAdapter {
         lbDescripcion.setText(descripcionProductos.get(position).toString());
 
 
-        StorageReference imgProductoRef=firebaseStorage.child(pathImgProductos.get(position).toString());
+        if(!pathImgProductos.get(position).toString().isEmpty()) {
+            StorageReference imgProductoRef = firebaseStorage.child(pathImgProductos.get(position).toString());
 
-        try {
-            final File fileImgProducto =File.createTempFile("images","jpg");
-            imgProductoRef.getFile(fileImgProducto)
-            .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    Uri uri=Uri.fromFile(fileImgProducto);
-                    imgProducto.setBackground(null);
-                    imgProducto.setImageURI(uri);
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
+            try {
+                final File fileImgProducto = File.createTempFile("images", "jpg");
+                imgProductoRef.getFile(fileImgProducto)
+                        .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                            @Override
+                            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                                Uri uri = Uri.fromFile(fileImgProducto);
+                                imgProducto.setBackground(null);
+                                imgProducto.setImageURI(uri);
+                            }
+                        });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+
+        rowView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                new AlertDialog.Builder(context)
+                        .setTitle("Eliminar producto")
+                        .setMessage("Desea eliminar el producto "+lbNombre.getText().toString()+"?")
+                        .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                eliminarProducto(lbNombre.getText().toString());
+                            }
+                        })
+                        .setNegativeButton("No",null)
+                        .setIcon(android.R.drawable.ic_dialog_info)
+                        .show();//*/
+                return true;
+            }
+        });
 
         return rowView;
     }
+
+    private void eliminarProducto(String nombreProducto) {
+        FirebaseFirestore firebaseDB = FirebaseFirestore.getInstance();
+
+        firebaseDB.collection("Usuarios").document(FirebaseAuth.getInstance().getCurrentUser().getEmail())
+                .collection("Productos").document(nombreProducto).delete();
+
+        getContext().startActivity(new Intent(context,MainActivity.class));
+        context.finish();
+    }
+
+
 }

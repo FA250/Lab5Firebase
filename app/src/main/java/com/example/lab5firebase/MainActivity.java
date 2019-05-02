@@ -84,7 +84,11 @@ public class MainActivity extends AppCompatActivity {
                                 nombreProductos.add(documentSnapshot.getString("Nombre"));
                                 precioProductos.add(String.valueOf(documentSnapshot.get("Precio")));
                                 descripcionProductos.add(documentSnapshot.getString("Descripcion"));
-                                pathImgProductos.add(documentSnapshot.getString("Imagen"));
+                                if(documentSnapshot.get("Imagen")!=null)
+                                    pathImgProductos.add(documentSnapshot.getString("Imagen"));
+                                else
+                                    pathImgProductos.add("");
+
                             }
 
                             ListView listViewProductos = findViewById(R.id.lstProductos);
