@@ -2,38 +2,60 @@ package com.example.lab5firebase;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
+import java.io.File;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AgregarProducto extends AppCompatActivity {
 
-    final int PERMISSION_REQUEST_CODE=4565;
-    final int SELECT_PICTURE=7895;
+    FirebaseUser usuarioActual;
 
-    String path_portada;
-    boolean subirFoto=false;
+    final int PERMISSION_REQUEST_CODE = 4565;
+    final int SELECT_PICTURE = 7895;
+
+    String path_imagen;
+    boolean subirFoto = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_agregar_producto);
+
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        usuarioActual = firebaseAuth.getCurrentUser();
     }
 
     public void btgAgregarImagen(View view) {
@@ -41,18 +63,18 @@ public class AgregarProducto extends AppCompatActivity {
     }
 
     // ------------------ Elegir imagen de usuario para mostrar ----------
-    public void ElegirImagen(){
-        if(Build.VERSION.SDK_INT >=23) {
-            if (checkPermission()){
+    public void ElegirImagen() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkPermission()) {
                 Intent intent = new Intent();
                 intent.setType("*/*");
                 intent.setAction(Intent.ACTION_GET_CONTENT);
                 startActivityForResult(Intent.createChooser(intent, "Select Picture"), SELECT_PICTURE);
 
-            }else{
+            } else {
                 requestPermission();
             }
-        }else{
+        } else {
             Intent intent = new Intent();
             intent.setType("*/*");
             intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -62,7 +84,7 @@ public class AgregarProducto extends AppCompatActivity {
     }
 
     private boolean checkPermission() {
-        int result = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE );
+        int result = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
         if (result == PackageManager.PERMISSION_GRANTED) {
             return true;
         } else {
@@ -84,9 +106,10 @@ public class AgregarProducto extends AppCompatActivity {
                 if (null != filePath) {
                     try {
                         ImageView imgUsuario = findViewById(R.id.imgProducto);
+                        imgUsuario.setBackground(null);
                         imgUsuario.setImageURI(filePath);
-                        path_portada = getFilePath(this, filePath);
-                        subirFoto=true;
+                        path_imagen = getFilePath(this, filePath);
+                        subirFoto = true;
                         Log.d("PATH", filePath.getPath());
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -156,5 +179,93 @@ public class AgregarProducto extends AppCompatActivity {
 
     public static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+
+    public void btnAgregarProducto(View view) {
+        EditText textNombre = findViewById(R.id.textNombreProducto);
+        EditText textPrecio = findViewById(R.id.textPrecio);
+        EditText textDescripcion = findViewById(R.id.textDescripcion);
+
+        String nombreProducto = textNombre.getText().toString();
+        String descripcionProducto = textDescripcion.getText().toString();
+
+        if (nombreProducto.isEmpty() || textPrecio.getText().toString().isEmpty() || descripcionProducto.isEmpty())
+            Toast.makeText(AgregarProducto.this, "Debe completar todos los campos", Toast.LENGTH_LONG).show();
+        else {
+            int precioProducto = Integer.parseInt(textPrecio.getText().toString());
+            subirDatos(nombreProducto, precioProducto, descripcionProducto);
+        }
+    }
+
+    private void subirDatos(final String nombreProducto, int precioProducto, String descripcionProducto) {
+        final Map<String, Object> producto = new HashMap<>();
+        producto.put("Nombre", nombreProducto);
+        producto.put("Precio", precioProducto);
+        producto.put("Descripcion", descripcionProducto);
+
+
+        nombreRepetidoBD(nombreProducto).addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                if (documentSnapshot.contains("Nombre")) {
+                    new AlertDialog.Builder(AgregarProducto.this)
+                            .setTitle("Producto repetido")
+                            .setMessage("Ya existe un producto con el nombre " + nombreProducto + ", ¿Desea modificarlo con los datos actuales?")
+                            .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    subirDatosAux(producto);
+                                }
+                            })
+                            .setNegativeButton("No",null)
+                            .setIcon(android.R.drawable.ic_dialog_info)
+                            .show();//*/
+                }
+                else
+                    subirDatosAux(producto);
+            }
+        });
+    }
+
+    private void subirDatosAux(Map<String, Object> producto) {
+        FirebaseFirestore firebaseDB = FirebaseFirestore.getInstance();
+
+        if (subirFoto) {
+            String pathImagenDB = "usuarios/" + usuarioActual.getEmail() + "/imagenesProductos/" + producto.get("Nombre").toString() + ".jpg";
+            Uri uri = Uri.fromFile(new File(path_imagen));
+            StorageReference storageReference = FirebaseStorage.getInstance().getReference();
+            StorageReference imagenProductoRef = storageReference.child(pathImagenDB);
+
+            imagenProductoRef.putFile(uri);
+
+            producto.put("Imagen", pathImagenDB);
+        } else
+            producto.put("Imagen", null);
+
+        firebaseDB.collection("Usuarios")
+                .document(usuarioActual.getEmail())
+                .collection("Productos")
+                .document(producto.get("Nombre").toString()).set(producto)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Toast.makeText(getApplicationContext(), "Se ha creado el producto correctamente", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(getApplicationContext(), "Error al agregar el nuevo producto", Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+
+    private Task<DocumentSnapshot> nombreRepetidoBD(final String nombreProducto) {
+        FirebaseFirestore firebaseDB = FirebaseFirestore.getInstance();
+
+       return firebaseDB.collection("Usuarios")
+                        .document(usuarioActual.getEmail())
+                        .collection("Productos").document(nombreProducto).get();
     }
 }

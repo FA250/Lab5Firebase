@@ -56,13 +56,14 @@
 
     <EditText
         android:id="@+id/textNombreProducto"
-        android:layout_width="200dp"
+        android:layout_width="300dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="72dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
+        android:inputType="text"
         android:hint="Nombre"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
@@ -70,8 +71,8 @@
         app:layout_constraintTop_toBottomOf="@+id/lyImagen" />
 
     <EditText
-        android:id="@+id/textCantidad"
-        android:layout_width="200dp"
+        android:id="@+id/textPrecio"
+        android:layout_width="300dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
@@ -86,17 +87,18 @@
 
     <EditText
         android:id="@+id/textDescripcion"
-        android:layout_width="200dp"
+        android:layout_width="300dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="44dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
+        android:inputType="textMultiLine"
         android:hint="Descripcion"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textCantidad" />
+        app:layout_constraintTop_toBottomOf="@+id/textPrecio" />
 
     <Button
         android:id="@+id/btnAgregarProducto"
@@ -108,6 +110,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginBottom="8dp"
+        android:onClick="btnAgregarProducto"
         android:text="Guardar producto"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
