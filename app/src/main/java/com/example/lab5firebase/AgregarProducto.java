@@ -226,11 +226,13 @@ public class AgregarProducto extends AppCompatActivity {
         });
     }
 
+
+
     private void subirDatosAux(Map<String, Object> producto) {
         FirebaseFirestore firebaseDB = FirebaseFirestore.getInstance();
 
         if (subirFoto) {
-            String pathImagenDB = "usuarios/" + usuarioActual.getEmail() + "/imagenesProductos/" + producto.get("Nombre").toString() + ".jpg";
+            String pathImagenDB = "usuarios/" + usuarioActual.getEmail() + "/imagenesProductos/" + producto.get("Nombre").toString().trim().replaceAll("\\s+","_") + ".jpg";
             Uri uri = Uri.fromFile(new File(path_imagen));
             StorageReference storageReference = FirebaseStorage.getInstance().getReference();
             StorageReference imagenProductoRef = storageReference.child(pathImagenDB);

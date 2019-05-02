@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <TableRow>
+
+            <ImageView
+                android:id="@+id/imgProducto"
+                android:layout_width="95dp"
+                android:layout_height="138dp"
+                android:maxHeight="80sp"
+                android:layout_marginBottom="1dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="2dp"
+                app:srcCompat="@android:drawable/ic_menu_gallery"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+        <LinearLayout
+            android:layout_marginTop="8dp"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/lbNombreProducto"
+                android:text="Nombre Producto"
+                android:textSize="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintLeft_toRightOf="@id/imgProducto"
+                app:layout_constraintTop_toTopOf="parent"/>
+<LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/lbPrecio"
+                android:text="Precio"
+                android:textSize="15dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintLeft_toRightOf="@id/imgProducto"
+                app:layout_constraintTop_toBottomOf="@id/lbNombreProducto"/>
+
+    <TextView
+        android:id="@+id/lbDescripcion"
+        android:text="Descripcion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintLeft_toRightOf="@id/lbNombreProducto"
+        app:layout_constraintTop_toTopOf="parent"
+        android:gravity="right"/>
+</LinearLayout>
+
+        </LinearLayout>
+
+    </TableRow>
+</TableLayout>
